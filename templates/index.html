@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Scholarship SQL Generator
+    </title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1000px;
+            margin: 50px auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(
+                0, 0, 0, 0.1
+            );
+        }
+
+        .input-area {
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 5px;
+            background: #2563eb;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .examples {
+            margin-top: 20px;
+        }
+
+        .example-btn {
+            margin: 5px;
+            padding: 8px 12px;
+            background: #e5e7eb;
+            color: #333;
+            border-radius: 5px;
+        }
+
+        .example-btn:hover {
+            background: #d1d5db;
+        }
+
+        #loading {
+            display: none;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #error {
+            color: red;
+            margin-top: 20px;
+        }
+
+        .result-section {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .sql-box {
+            background: #1e1e1e;
+            color: #00ff88;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th {
+            background: #2563eb;
+            color: white;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        @media (max-width: 600px) {
+
+            .input-area {
+                flex-direction: column;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <h1>
+        🎓 Scholarship SQL Generator
+    </h1>
+
+    <p class="subtitle">
+        Ask questions about student scholarship data using normal English.
+    </p>
+
+
+    <div class="card">
+
+        <div class="input-area">
+
+            <input
+                type="text"
+                id="question"
+                placeholder="Example: Show students with marks above 80"
+            >
+
+            <button onclick="askQuestion()">
+                Generate
+            </button>
+
+        </div>
+
+
+        <div class="examples">
+
+            <strong>
+                Try these examples:
+            </strong>
+
+            <br>
+
+            <button
+                class="example-btn"
+                onclick="setQuestion(
+                'Show all students'
+                )"
+            >
+                Show all students
+            </button>
+
+
+            <button
+                class="example-btn"
+                onclick="setQuestion(
+                'Show students with marks above 80'
+                )"
+            >
+                Marks above 80
+            </button>
+
+
+            <button
+                class="example-btn"
+                onclick="setQuestion(
+                'Show students with approved scholarships'
+                )"
+            >
+                Approved scholarships
+            </button>
+
+        </div>
+
+
+        <div id="loading">
+
+            🤖 Ollama is generating SQL...
+
+        </div>
+
+
+        <div id="error"></div>
+
+
+        <div
+            class="result-section"
+            id="resultSection"
+        >
+
+            <h2>
+                Generated SQL
+            </h2>
+
+            <div
+                class="sql-box"
+                id="sqlQuery"
+            ></div>
+
+
+            <h2>
+                Results
+            </h2>
+
+            <div id="tableResult">
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+
+function setQuestion(question) {
+
+    document.getElementById(
+        "question"
+    ).value = question;
+
+}
+
+
+async function askQuestion() {
+
+    const question =
+        document.getElementById(
+            "question"
+        ).value;
+
+
+    const loading =
+        document.getElementById(
+            "loading"
+        );
+
+
+    const error =
+        document.getElementById(
+            "error"
+        );
+
+
+    const resultSection =
+        document.getElementById(
+            "resultSection"
+        );
+
+
+    // Reset display
+
+    error.innerText = "";
+
+    resultSection.style.display =
+        "none";
+
+
+    if (!question.trim()) {
+
+        error.innerText =
+            "Please enter a question.";
+
+        return;
+
+    }
+
+
+    loading.style.display =
+        "block";
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/ask",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                        "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        question: question
+                    })
+
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        loading.style.display =
+            "none";
+
+
+        if (!response.ok) {
+
+            error.innerText =
+                data.detail ||
+                "Something went wrong.";
+
+            return;
+
+        }
+
+
+        // Display SQL
+
+        document.getElementById(
+            "sqlQuery"
+        ).innerText =
+            data.generated_sql;
+
+
+        // Display results
+
+        displayTable(
+            data.results
+        );
+
+
+        resultSection.style.display =
+            "block";
+
+
+    }
+
+    catch (err) {
+
+        loading.style.display =
+            "none";
+
+        error.innerText =
+            "Could not connect to the server.";
+
+    }
+
+}
+
+
+function displayTable(results) {
+
+    const tableDiv =
+        document.getElementById(
+            "tableResult"
+        );
+
+
+    if (results.length === 0) {
+
+        tableDiv.innerHTML =
+            "<p>No results found.</p>";
+
+        return;
+
+    }
+
+
+    let table =
+        "<table>";
+
+
+    // Table headers
+
+    table += "<tr>";
+
+
+    Object.keys(
+        results[0]
+    ).forEach(function(key) {
+
+        table +=
+            "<th>" +
+            key +
+            "</th>";
+
+    });
+
+
+    table += "</tr>";
+
+
+    // Table rows
+
+    results.forEach(
+        function(row) {
+
+            table += "<tr>";
+
+
+            Object.values(
+                row
+            ).forEach(
+                function(value) {
+
+                    table +=
+                        "<td>" +
+                        value +
+                        "</td>";
+
+                }
+            );
+
+
+            table += "</tr>";
+
+        }
+    );
+
+
+    table += "</table>";
+
+
+    tableDiv.innerHTML =
+        table;
+
+}
+
+
+</script>
+
+</body>
+
+</html>

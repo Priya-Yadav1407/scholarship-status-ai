@@ -11,9 +11,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>
-        Scholarship SQL Generator
-    </title>
+    <title>Scholarship SQL Generator</title>
 
     <style>
 
@@ -118,6 +116,17 @@
             padding: 20px;
             border-radius: 8px;
             overflow-x: auto;
+            white-space: pre-wrap;
+        }
+
+        .explanation-box {
+            background: #f0f7ff;
+            border-left: 5px solid #2563eb;
+            padding: 20px;
+            border-radius: 8px;
+            line-height: 1.6;
+            color: #333;
+            white-space: pre-wrap;
         }
 
         table {
@@ -166,6 +175,8 @@
 
     <div class="card">
 
+        <!-- Question Input -->
+
         <div class="input-area">
 
             <input
@@ -181,6 +192,8 @@
         </div>
 
 
+        <!-- Example Questions -->
+
         <div class="examples">
 
             <strong>
@@ -191,9 +204,7 @@
 
             <button
                 class="example-btn"
-                onclick="setQuestion(
-                'Show all students'
-                )"
+                onclick="setQuestion('Show all students')"
             >
                 Show all students
             </button>
@@ -201,9 +212,7 @@
 
             <button
                 class="example-btn"
-                onclick="setQuestion(
-                'Show students with marks above 80'
-                )"
+                onclick="setQuestion('Show students with marks above 80')"
             >
                 Marks above 80
             </button>
@@ -211,30 +220,52 @@
 
             <button
                 class="example-btn"
-                onclick="setQuestion(
-                'Show students with approved scholarships'
-                )"
+                onclick="setQuestion('Show students with approved scholarships')"
             >
                 Approved scholarships
+            </button>
+
+
+            <button
+                class="example-btn"
+                onclick="setQuestion('Show the number of students in each course')"
+            >
+                Students by course
+            </button>
+
+
+            <button
+                class="example-btn"
+                onclick="setQuestion('Show the average marks for each course')"
+            >
+                Average marks
             </button>
 
         </div>
 
 
+        <!-- Loading -->
+
         <div id="loading">
 
-            🤖 Ollama is generating SQL...
+            🤖 Ollama is processing your question...
 
         </div>
 
 
+        <!-- Error -->
+
         <div id="error"></div>
 
+
+        <!-- Results Section -->
 
         <div
             class="result-section"
             id="resultSection"
         >
+
+            <!-- Generated SQL -->
 
             <h2>
                 Generated SQL
@@ -246,12 +277,28 @@
             ></div>
 
 
+            <!-- Database Results -->
+
             <h2>
                 Results
             </h2>
 
             <div id="tableResult">
 
+            </div>
+
+
+            <!-- AI Result Explanation -->
+
+            <h2>
+                AI Result Explanation
+            </h2>
+
+            <div
+                class="explanation-box"
+                id="explanation"
+            >
+                The result explanation will appear here.
             </div>
 
         </div>
@@ -264,6 +311,10 @@
 <script>
 
 
+// =====================================
+// SET EXAMPLE QUESTION
+// =====================================
+
 function setQuestion(question) {
 
     document.getElementById(
@@ -272,6 +323,10 @@ function setQuestion(question) {
 
 }
 
+
+// =====================================
+// ASK QUESTION
+// =====================================
 
 async function askQuestion() {
 
@@ -299,13 +354,18 @@ async function askQuestion() {
         );
 
 
-    // Reset display
+    // Reset previous error
 
     error.innerText = "";
+
+
+    // Hide previous results
 
     resultSection.style.display =
         "none";
 
+
+    // Check if question is empty
 
     if (!question.trim()) {
 
@@ -317,11 +377,15 @@ async function askQuestion() {
     }
 
 
+    // Show loading message
+
     loading.style.display =
         "block";
 
 
     try {
+
+        // Send question to FastAPI
 
         const response =
             await fetch(
@@ -342,13 +406,19 @@ async function askQuestion() {
             );
 
 
+        // Get response data
+
         const data =
             await response.json();
 
 
+        // Hide loading message
+
         loading.style.display =
             "none";
 
+
+        // Check for errors
 
         if (!response.ok) {
 
@@ -361,7 +431,9 @@ async function askQuestion() {
         }
 
 
-        // Display SQL
+        // =====================================
+        // DISPLAY GENERATED SQL
+        // =====================================
 
         document.getElementById(
             "sqlQuery"
@@ -369,16 +441,29 @@ async function askQuestion() {
             data.generated_sql;
 
 
-        // Display results
+        // =====================================
+        // DISPLAY DATABASE RESULTS
+        // =====================================
 
         displayTable(
             data.results
         );
 
 
+        // =====================================
+        // DISPLAY AI RESULT EXPLANATION
+        // =====================================
+
+        document.getElementById(
+            "explanation"
+        ).innerText =
+            data.explanation;
+
+
+        // Show complete result section
+
         resultSection.style.display =
             "block";
-
 
     }
 
@@ -390,10 +475,16 @@ async function askQuestion() {
         error.innerText =
             "Could not connect to the server.";
 
+        console.error(err);
+
     }
 
 }
 
+
+// =====================================
+// DISPLAY RESULTS AS TABLE
+// =====================================
 
 function displayTable(results) {
 
@@ -403,7 +494,9 @@ function displayTable(results) {
         );
 
 
-    if (results.length === 0) {
+    // Check if no results were found
+
+    if (!results || results.length === 0) {
 
         tableDiv.innerHTML =
             "<p>No results found.</p>";
@@ -417,7 +510,9 @@ function displayTable(results) {
         "<table>";
 
 
-    // Table headers
+    // =====================================
+    // TABLE HEADERS
+    // =====================================
 
     table += "<tr>";
 
@@ -437,7 +532,9 @@ function displayTable(results) {
     table += "</tr>";
 
 
-    // Table rows
+    // =====================================
+    // TABLE ROWS
+    // =====================================
 
     results.forEach(
         function(row) {
@@ -452,7 +549,7 @@ function displayTable(results) {
 
                     table +=
                         "<td>" +
-                        value +
+                        (value ?? "") +
                         "</td>";
 
                 }
@@ -468,11 +565,12 @@ function displayTable(results) {
     table += "</table>";
 
 
+    // Display the table
+
     tableDiv.innerHTML =
         table;
 
 }
-
 
 </script>
 
